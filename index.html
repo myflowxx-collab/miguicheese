@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miguicheese - La Auténtica Tarta de Queso</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: black;
+            color: white;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(244, 180, 0, 0.4)); }
+            50% { filter: drop-shadow(0 0 50px rgba(244, 180, 0, 0.7)); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Animación de atención para Instagram */
+        @keyframes attention-wiggle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .text-cheese { color: #FFB84D; }
+        .bg-cheese { background-color: #FFB84D; }
+        .float-cake { animation: float 6s ease-in-out infinite; }
+        
+        .glass-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            filter: url('#goo');
+        }
+
+        .cut-mask-left { clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%); }
+        .cut-mask-right { clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%); }
+
+        .selection-cheese::selection {
+            background: #FFB84D;
+            color: black;
+        }
+
+        /* Degradado Instagram */
+        .bg-instagram {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+        }
+
+        .animate-instagram {
+            animation: attention-wiggle 3s ease-in-out infinite;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 200;
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #111;
+            border: 1px solid rgba(255, 184, 77, 0.2);
+            padding: 2.5rem;
+            border-radius: 2rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body class="selection-cheese">
+
+    <!-- Filtro SVG para efecto líquido (Metaballs) -->
+    <svg class="hidden">
+        <defs>
+            <filter id="goo">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
+                <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Capas de Canvas para la física del queso -->
+    <canvas id="canvasPhysics" class="fixed inset-0 pointer-events-none z-[60]"></canvas>
+    <canvas id="canvasSplash" class="glass-splash"></canvas>
+
+    <!-- Modal para Uber Eats -->
+    <div id="uberModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 class="text-cheese text-2xl font-black italic mb-6 tracking-tighter uppercase">Selecciona tu zona</h3>
+            <p class="text-zinc-500 mb-8 text-sm uppercase tracking-widest">Elige el local más cercano para tu pedido</p>
+            <div class="flex flex-col gap-4">
+                <a href="https://www.ubereats.com/es/store/miguicheese-felipe-fraile/cBWf7FVcXhu-Hz3OmEc-gA?srsltid=AfmBOooeSlo92-dqExPTNDa6UYhoAlIICMNm-AGlt7qtpmI0Mwe791p1" target="_blank" class="bg-zinc-900 hover:bg-cheese hover:text-black py-4 rounded-xl font-bold transition-all uppercase tracking-widest text-xs border border-white/5">Felipe Fraile</a>
+                <a href="https://www.ubereats.com/es/store/miguicheese-jose-calvo/yPjbbaJXX9uv1ek0VPZvZg?srsltid=AfmBOorB2XL2tmcNtJ48kqCdgWcOniwjvigt7ypBHEAZ7OZ05TQOLssr" target="_blank" class="bg-zinc-900 hover:bg-cheese hover:text-black py-4 rounded-xl font-bold transition-all uppercase tracking-widest text-xs border border-white/5">José Calvo</a>
+                <a href="https://www.ubereats.com/es/store/miguicheese-zabaleta/0CmV2zskXUugOEfmNKkI3A?srsltid=AfmBOoqx44tSC4txj5WZAcMn2zVIdQb66A-jcFH5uuf90Gl6tGyVY7kM" target="_blank" class="bg-zinc-900 hover:bg-cheese hover:text-black py-4 rounded-xl font-bold transition-all uppercase tracking-widest text-xs border border-white/5">Zabaleta</a>
+            </div>
+            <button onclick="document.getElementById('uberModal').classList.remove('active')" class="mt-8 text-zinc-600 hover:text-white text-[10px] font-black tracking-widest uppercase">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="fixed top-0 w-full z-[70] bg-black/80 backdrop-blur-2xl border-b border-white/5 px-6 py-5 flex justify-between items-center">
+        <a href="#">
+            <img src="https://i.ibb.co/TB4HnmgF/miguicheese-tarta-de-queso-62e591ebc9360-Photoroom.png" alt="Logo" class="h-10 md:h-12">
+        </a>
+        <div class="flex items-center gap-6 md:gap-10">
+            <div class="hidden md:flex gap-10 text-[10px] font-black tracking-[0.5em] uppercase opacity-40">
+                <a href="#pedir" class="hover:text-cheese transition-all">M-30 Delivery</a>
+            </div>
+            <a href="#pedir" class="bg-cheese text-black px-8 py-2 rounded-full font-black text-[10px] tracking-widest hover:scale-105 transition-all uppercase text-center">
+                PEDIR AHORA
+            </a>
+        </div>
+    </nav>
+
+    <!-- SECCIÓN HERO -->
+    <section class="relative min-h-screen flex flex-col justify-center items-center px-6 pt-32 overflow-hidden">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-[#FFB84D]/5 blur-[180px] pointer-events-none"></div>
+
+        <div class="relative z-10 text-center max-w-6xl">
+            <div class="inline-block px-4 py-1 border border-[#FFB84D]/30 rounded-full text-cheese text-[10px] font-black tracking-[0.4em] uppercase mb-8 animate-pulse">
+                Established 2019
+            </div>
+            <h1 class="text-6xl md:text-[11rem] font-black mb-6 leading-[0.8] tracking-tighter uppercase">
+                5 AÑOS CON <br />
+                <span class="text-cheese italic">Nuestra Clásica</span>
+            </h1>
+            <p class="text-xl md:text-3xl text-zinc-600 mb-16 max-w-3xl mx-auto font-light leading-relaxed">
+                Fieles a la receta original que rompió las reglas de Madrid en 2019.
+            </p>
+            <div class="relative group inline-block cursor-pointer">
+                <div class="absolute inset-0 bg-[#FFB84D] blur-[120px] opacity-10 group-hover:opacity-40 transition-opacity"></div>
+                <img src="https://i.ibb.co/bggCzMqN/Tarta-Home-03.png" alt="Tarta Miguicheese" class="relative w-full max-w-xl mx-auto drop-shadow-[0_50px_100px_rgba(244,180,0,0.4)] float-cake">
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN DINÁMICA: LA EXPLOSIÓN -->
+    <section id="historia" class="py-60 relative flex flex-col items-center justify-center bg-zinc-950/20">
+        <div class="max-w-6xl mx-auto text-center px-6 relative z-10">
+            <div id="explosionText" class="transition-all duration-1000">
+                <h2 class="text-5xl md:text-9xl font-black mb-10 tracking-tighter uppercase italic">
+                    Prepárate para la <br />
+                    <span class="text-cheese">Explosión</span>
+                </h2>
+                <p class="text-zinc-500 tracking-[0.6em] text-xs font-black uppercase mb-20">
+                    Desliza para romper la tarta
+                </p>
+            </div>
+
+            <div class="relative h-[600px] w-full flex justify-center items-center">
+                <div class="relative w-full max-w-2xl h-full flex justify-center items-center">
+                    <div id="cakePartLeft" class="absolute transition-all duration-700 ease-out cut-mask-left">
+                        <img src="https://i.ibb.co/bggCzMqN/Tarta-Home-03.png" alt="Parte Izquierda" class="w-full h-auto drop-shadow-2xl">
+                    </div>
+                    <div id="cakePartRight" class="absolute transition-all duration-700 ease-out cut-mask-right">
+                        <img src="https://i.ibb.co/bggCzMqN/Tarta-Home-03.png" alt="Parte Derecha" class="w-full h-auto drop-shadow-2xl">
+                    </div>
+                    <div id="brutalText" class="absolute inset-0 flex items-center justify-center animate-pulse opacity-0 scale-50 transition-all duration-700">
+                        <h3 class="text-7xl md:text-[12rem] font-black text-cheese italic tracking-tighter drop-shadow-2xl">
+                            BRUTAL
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN PEDIDOS M-30 -->
+    <section id="pedir" class="py-40 bg-white text-black">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <div class="inline-flex items-center gap-4 bg-black text-white px-10 py-4 rounded-full text-xs font-black tracking-[0.4em] mb-16 animate-bounce">
+                <i data-lucide="map-pin" class="text-cheese"></i> MADRID M-30
+            </div>
+            <h2 class="text-6xl md:text-[9rem] font-black leading-[0.8] tracking-tighter uppercase mb-24">
+                ¿QUIERES UNA? <br /> <span class="text-zinc-300">PÍDELA YA</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-16">
+                <!-- GLOVO -->
+                <a href="https://glovoapp.com/es/es/madrid/stores/miguicheese-madrid" target="_blank" class="group relative bg-zinc-50 p-16 rounded-[4rem] flex flex-col items-center justify-center transition-all duration-700 hover:bg-black hover:text-white hover:scale-110 shadow-2xl">
+                    <div class="w-24 h-24 bg-black text-white rounded-full flex items-center justify-center text-3xl font-black mb-12 group-hover:bg-cheese group-hover:text-black transition-colors">GL</div>
+                    <span class="text-4xl font-black italic tracking-tighter mb-14 tracking-widest uppercase">GLOVO</span>
+                    <div class="p-4 rounded-full border border-black/10 group-hover:border-white/20">
+                        <i data-lucide="chevron-right" size="32"></i>
+                    </div>
+                </a>
+                
+                <!-- UBER EATS - CON MODAL -->
+                <div onclick="document.getElementById('uberModal').classList.add('active')" class="cursor-pointer group relative bg-zinc-50 p-16 rounded-[4rem] flex flex-col items-center justify-center transition-all duration-700 hover:bg-black hover:text-white hover:scale-110 shadow-2xl">
+                    <div class="w-24 h-24 bg-black text-white rounded-full flex items-center justify-center text-3xl font-black mb-12 group-hover:bg-cheese group-hover:text-black transition-colors">UB</div>
+                    <span class="text-4xl font-black italic tracking-tighter mb-14 tracking-widest uppercase">UBER EATS</span>
+                    <div class="p-4 rounded-full border border-black/10 group-hover:border-white/20">
+                        <i data-lucide="chevron-right" size="32"></i>
+                    </div>
+                </div>
+
+                <!-- JUST EAT -->
+                <a href="https://www.just-eat.es/restaurants-miguicheese-madrid/menu" target="_blank" class="group relative bg-zinc-50 p-16 rounded-[4rem] flex flex-col items-center justify-center transition-all duration-700 hover:bg-black hover:text-white hover:scale-110 shadow-2xl">
+                    <div class="w-24 h-24 bg-black text-white rounded-full flex items-center justify-center text-3xl font-black mb-12 group-hover:bg-cheese group-hover:text-black transition-colors">JE</div>
+                    <span class="text-4xl font-black italic tracking-tighter mb-14 tracking-widest uppercase">JUST EAT</span>
+                    <div class="p-4 rounded-full border border-black/10 group-hover:border-white/20">
+                        <i data-lucide="chevron-right" size="32"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN RESEÑAS -->
+    <section id="resenas" class="py-60 bg-zinc-950 overflow-hidden">
+        <div class="max-w-5xl mx-auto px-6 text-center">
+            <div class="flex justify-center gap-2 mb-16 text-cheese">
+                <i data-lucide="star" fill="currentColor"></i>
+                <i data-lucide="star" fill="currentColor"></i>
+                <i data-lucide="star" fill="currentColor"></i>
+                <i data-lucide="star" fill="currentColor"></i>
+                <i data-lucide="star" fill="currentColor"></i>
+            </div>
+
+            <div class="relative h-[400px] flex items-center justify-center">
+                <div id="testimonialContainer" class="w-full">
+                    <!-- Las reseñas se insertan aquí vía JS -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-24 border-t border-white/5 bg-black px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-16">
+            <div class="text-center md:text-left space-y-6">
+                <img src="https://i.ibb.co/TB4HnmgF/miguicheese-tarta-de-queso-62e591ebc9360-Photoroom.png" alt="Logo Footer" class="h-16 mx-auto md:mx-0 drop-shadow-[0_0_40px_rgba(244,180,0,0.5)]">
+                <p class="text-zinc-600 text-base max-w-sm font-medium leading-relaxed italic opacity-60">
+                    "Fieles a la misma receta con la que empezó todo."
+                </p>
+            </div>
+
+            <!-- Redes Sociales: Instagram con Alta Visibilidad -->
+            <div class="flex flex-col items-center md:items-end gap-4">
+                <a href="https://www.instagram.com/miguicheese/?__pwa=1" target="_blank" class="group relative bg-instagram p-0.5 rounded-2xl animate-instagram transition-all hover:scale-105 shadow-[0_0_30px_rgba(214,36,159,0.3)]">
+                    <div class="bg-black rounded-[calc(1rem-2px)] px-6 py-4 flex items-center gap-4">
+                        <i data-lucide="instagram" class="text-white" size="32"></i>
+                        <div class="flex flex-col text-left">
+                            <span class="text-white font-black text-xs uppercase tracking-tighter">Síguenos</span>
+                            <span class="text-zinc-400 text-[10px] font-bold uppercase tracking-widest leading-none">Info privilegiada</span>
+                        </div>
+                    </div>
+                </a>
+                <p class="text-[10px] text-zinc-700 font-bold uppercase tracking-[0.2em]">Únete a los Cheese Lovers</p>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-20 pt-10 border-t border-white/5 text-center text-[10px] text-zinc-800 font-black tracking-[1em] uppercase">
+            © 2019 MIGUICHEESE - SIEMPRE FIELES A LA CLÁSICA
+        </div>
+    </footer>
+
+    <script>
+        // --- CONSTANTES Y ESTADO ---
+        const PARTICLE_COUNT = 40;
+        const SPLASH_COUNT = 15;
+        let hasExploded = false;
+        let activeTestimonial = 0;
+
+        const testimonials = [
+            { name: "Lucía M.", text: "La textura es de otro planeta. El centro derretido es adictivo." },
+            { name: "Carlos G.", text: "He probado muchas tartas de queso en Madrid y esta es, sin duda, la número 1." },
+            { name: "Marta R.", text: "Fieles a la receta original, se nota la calidad en cada bocado." },
+            { name: "Javi S.", text: "El envío dentro de la M-30 fue rapidísimo. Llegó perfecta." }
+        ];
+
+        // --- REFERENCIAS ---
+        const canvas = document.getElementById('canvasPhysics');
+        const sCanvas = document.getElementById('canvasSplash');
+        const cakeLeft = document.getElementById('cakePartLeft');
+        const cakeRight = document.getElementById('cakePartRight');
+        const explosionText = document.getElementById('explosionText');
+        const brutalText = document.getElementById('brutalText');
+        const testimonialContainer = document.getElementById('testimonialContainer');
+
+        let particles = [];
+        let splashes = [];
+
+        // --- INICIALIZACIÓN ---
+        function init() {
+            lucide.createIcons();
+            resize();
+            renderTestimonial();
+            animate();
+            
+            window.addEventListener('resize', resize);
+            window.addEventListener('scroll', handleScroll);
+            
+            // Ciclo de testimonios
+            setInterval(() => {
+                activeTestimonial = (activeTestimonial + 1) % testimonials.length;
+                renderTestimonial();
+            }, 4000);
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            sCanvas.width = window.innerWidth;
+            sCanvas.height = window.innerHeight;
+        }
+
+        // --- LÓGICA DEL MODAL ---
+        function closeModal(e) {
+            document.getElementById('uberModal').classList.remove('active');
+        }
+
+        // --- LÓGICA DE FÍSICA ---
+        function triggerExplosion() {
+            if (hasExploded) return;
+            hasExploded = true;
+
+            // UI Changes
+            explosionText.style.opacity = '0';
+            explosionText.style.transform = 'scale(1.5)';
+            cakeLeft.style.transform = 'translateX(-400px) translateY(-20px) rotate(-30deg)';
+            cakeLeft.style.opacity = '0';
+            cakeLeft.style.filter = 'blur(10px)';
+            cakeRight.style.transform = 'translateX(400px) translateY(20px) rotate(30deg)';
+            cakeRight.style.opacity = '0';
+            cakeRight.style.filter = 'blur(10px)';
+            brutalText.style.opacity = '1';
+            brutalText.style.transform = 'scale(1)';
+
+            // Partículas voladoras
+            const startX = window.innerWidth / 2;
+            const startY = window.innerHeight / 2;
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push({
+                    x: startX,
+                    y: startY,
+                    vx: (Math.random() - 0.5) * 40,
+                    vy: (Math.random() - 0.7) * 45,
+                    size: Math.random() * 30 + 10,
+                    life: 1
+                });
+            }
+
+            // Salpicaduras en el cristal
+            for (let i = 0; i < SPLASH_COUNT; i++) {
+                setTimeout(() => {
+                    splashes.push({
+                        x: Math.random() * window.innerWidth,
+                        y: Math.random() * window.innerHeight,
+                        size: Math.random() * 100 + 50,
+                        opacity: 0.9,
+                        drip: 0,
+                        scale: 0.5
+                    });
+                }, i * 50);
+            }
+        }
+
+        function handleScroll() {
+            const section = document.getElementById('historia');
+            if (!section) return;
+            const rect = section.getBoundingClientRect();
+            if (rect.top < window.innerHeight / 2 && !hasExploded) {
+                triggerExplosion();
+            }
+        }
+
+        function animate() {
+            const ctx = canvas.getContext('2d');
+            const sCtx = sCanvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+
+            // Partículas voladoras
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.8; // Gravedad
+                p.life -= 0.01;
+
+                ctx.beginPath();
+                const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                grad.addColorStop(0, '#FFB84D');
+                grad.addColorStop(1, '#E69B2E');
+                ctx.fillStyle = grad;
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+
+            // Salpicaduras en pantalla (con desvanecimiento)
+            splashes.forEach((s, i) => {
+                s.drip += Math.random() * 0.5;
+                s.scale = Math.min(1, s.scale + 0.1);
+
+                sCtx.save();
+                sCtx.translate(s.x, s.y);
+                sCtx.scale(s.scale, s.scale);
+                sCtx.globalAlpha = s.opacity;
+
+                sCtx.beginPath();
+                sCtx.fillStyle = '#FFB84D';
+                sCtx.shadowBlur = 15;
+                sCtx.shadowColor = 'rgba(0,0,0,0.3)';
+                sCtx.arc(0, s.drip, s.size, 0, Math.PI * 2);
+                sCtx.fill();
+
+                // Brillo realista
+                sCtx.beginPath();
+                sCtx.fillStyle = 'rgba(255,255,255,0.4)';
+                sCtx.arc(-s.size / 3, s.drip - s.size / 3, s.size / 4, 0, Math.PI * 2);
+                sCtx.fill();
+
+                sCtx.restore();
+
+                s.opacity -= 0.008; 
+                
+                if (s.opacity <= 0) {
+                    splashes.splice(i, 1);
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // --- RENDERIZADO DE TESTIMONIOS ---
+        function renderTestimonial() {
+            const t = testimonials[activeTestimonial];
+            testimonialContainer.innerHTML = `
+                <div class="transition-all duration-1000 flex flex-col items-center justify-center">
+                    <p class="text-4xl md:text-7xl font-black italic mb-20 text-white leading-tight tracking-tighter">
+                        "${t.text}"
+                    </p>
+                    <div class="flex items-center gap-8">
+                        <div class="w-20 h-20 bg-cheese text-black rounded-full flex items-center justify-center font-black text-3xl shadow-2xl shadow-cheese/40">
+                            ${t.name[0]}
+                        </div>
+                        <div class="text-left">
+                            <span class="block text-white font-black tracking-[0.3em] uppercase text-sm mb-1">
+                                ${t.name}
+                            </span>
+                            <span class="text-cheese font-black tracking-widest text-[11px] uppercase italic opacity-60">
+                                Verified Addict
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
