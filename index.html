@@ -331,7 +331,7 @@
         // --- CONFIGURACIÓN WHATSAPP ---
         function setupWhatsApp() {
             const phone = "34627256228";
-            const message = `(nombre y apellido)\n(hora y día de recogida)\n(Ubicación de recogida (Felipe Fraile, José Calvo, Zabaleta))\n\nA continuación de rellenar los siguientes datos tienes que hacer un bizum al siguiente número: 627256228.\nTe pasaremos la ubicación exacta y la confirmación de tu pedido lo antes posible.`;
+            const message = `(nombre y apellido)\n(hora y día de recogida)\n(Ubicación de recogida (Felipe Fraile, José Calvo, Zabaleta))\n\nA continuación de rellenar los siguientes datos tiene que hacer un bizum al siguiente número: 627256228 con asunto su nombre y apellido.\nL@ pasaremos la ubicación exacta y la confirmación de tu pedido lo antes posible.\nGracias:).`;
             
             const encodedMessage = encodeURIComponent(message);
             document.getElementById('whatsappBtn').href = `https://wa.me/${phone}?text=${encodedMessage}`;
@@ -491,3 +491,4 @@
     </script>
 </body>
 </html>
+
